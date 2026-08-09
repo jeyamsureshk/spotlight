@@ -8,7 +8,7 @@ import { useMutation, useQuery } from "convex/react";
 import { Image } from "expo-image";
 import { useUser } from "@clerk/clerk-expo";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Alert, View, Text, TouchableOpacity, ScrollView, Pressable, FlatList } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, Pressable, FlatList } from "react-native";
 
 export default function UserProfileScreen() {
   const { id } = useLocalSearchParams();
@@ -39,7 +39,7 @@ export default function UserProfileScreen() {
 
   const handleBack = () => {
     if (router.canGoBack()) router.back();
-    else router.replace("/profile");
+    else router.replace("/(tabs)");
   };
 
   const handleSendMessage = async () => {
@@ -101,27 +101,9 @@ export default function UserProfileScreen() {
                 (isFriends || hasRequested || hasIncomingRequest) && styles.followingButton,
               ]}
               onPress={() => {
-                if (!loggedInUser?._id || !id) return;
-
-                if (isFriends) {
-                  Alert.alert(
-                    "Remove Friend",
-                    "Are you sure you want to remove this friend? This will unfollow them.",
-                    [
-                      { text: "Cancel", style: "cancel" },
-                      {
-                        text: "Unfollow",
-                        style: "destructive",
-                        onPress: () => {
-                          toggleFollow({ viewerId: loggedInUser._id, profileId: id as Id<"users"> });
-                        },
-                      },
-                    ]
-                  );
-                  return;
+                if (loggedInUser?._id && id) {
+                  toggleFollow({ viewerId: loggedInUser._id, profileId: id as Id<"users"> });
                 }
-
-                toggleFollow({ viewerId: loggedInUser._id, profileId: id as Id<"users"> });
               }}
             >
               <Text

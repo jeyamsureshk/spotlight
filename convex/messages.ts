@@ -6,12 +6,38 @@ function normalizeParticipantIds(a: string, b: string) {
   return a < b ? [a, b] : [b, a];
 }
 
+async function areFriends(ctx: any, userA: any, userB: any) {
+  const following = await ctx.db
+    .query("follows")
+    .withIndex("by_both", (q: any) =>
+      q.eq("followerId", userA).eq("followingId", userB)
+    )
+    .first();
+
+  const reverse = await ctx.db
+    .query("follows")
+    .withIndex("by_both", (q: any) =>
+      q.eq("followerId", userB).eq("followingId", userA)
+    )
+    .first();
+
+  return (
+    !!following && (following.status === "accepted" || following.status === undefined) &&
+    !!reverse && (reverse.status === "accepted" || reverse.status === undefined)
+  );
+}
+
 export const createOrGetConversation = mutation({
   args: { otherUserId: v.id("users") },
   handler: async (ctx, args) => {
     const currentUser = await getAuthenticatedUser(ctx);
     if (currentUser._id.toString() === args.otherUserId.toString()) {
       throw new Error("Cannot create a conversation with yourself");
+    }
+
+    const friends = await areFriends(ctx, currentUser._id, args.otherUserId);
+    if (!friends) {
+      throw new Error("You can only message friends after your follow request is accepted.");
     }
 
     const [userA, userB] = normalizeParticipantIds(
@@ -175,6 +201,16 @@ export const sendMessage = mutation({
       throw new Error("Unauthorized");
     }
 
+    const otherUserId =
+      conversation.userA.toString() === currentUser._id.toString()
+        ? conversation.userB
+        : conversation.userA;
+
+    const friends = await areFriends(ctx, currentUser._id, otherUserId);
+    if (!friends) {
+      throw new Error("You can only message friends after your follow request is accepted.");
+    }
+
     const messageId = await ctx.db.insert("messages", {
       conversationId: args.conversationId,
       senderId: currentUser._id,
@@ -187,5 +223,52 @@ export const sendMessage = mutation({
     });
 
     return messageId;
+  },
+});
+
+// --- NEW MUTATIONS ADDED BELOW ---
+
+export const editMessage = mutation({
+  args: {
+    messageId: v.id("messages"),
+    content: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const currentUser = await getAuthenticatedUser(ctx);
+    const message = await ctx.db.get(args.messageId);
+
+    if (!message) {
+      throw new Error("Message not found");
+    }
+
+    // Ensure the person editing is the original sender
+    if (message.senderId.toString() !== currentUser._id.toString()) {
+      throw new Error("Unauthorized: You can only edit your own messages");
+    }
+
+    await ctx.db.patch(args.messageId, {
+      content: args.content,
+    });
+  },
+});
+
+export const deleteMessage = mutation({
+  args: {
+    messageId: v.id("messages"),
+  },
+  handler: async (ctx, args) => {
+    const currentUser = await getAuthenticatedUser(ctx);
+    const message = await ctx.db.get(args.messageId);
+
+    if (!message) {
+      throw new Error("Message not found");
+    }
+
+    // Ensure the person deleting is the original sender
+    if (message.senderId.toString() !== currentUser._id.toString()) {
+      throw new Error("Unauthorized: You can only delete your own messages");
+    }
+
+    await ctx.db.delete(args.messageId);
   },
 });

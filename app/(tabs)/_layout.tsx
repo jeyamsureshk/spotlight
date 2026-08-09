@@ -11,11 +11,11 @@ export default function TabLayout() {
         tabBarActiveTintColor: COLORS.primary,
         tabBarInactiveTintColor: COLORS.grey,
         tabBarStyle: {
-          backgroundColor: "black",
+          backgroundColor: "transparent",
           borderTopWidth: 0,
           position: "absolute",
-          elevation: 0,
-          height: 40,
+          elevation: 15,
+          height: 48,
           paddingBottom: 8,
         },
       }}
@@ -36,16 +36,11 @@ export default function TabLayout() {
         name="create"
         options={{
           tabBarIcon: ({ size }) => (
-            <Ionicons name="add-circle" size={size} color={COLORS.primary} />
+            <Ionicons name="add-circle" size={size}/>
           ),
         }}
       />
-      <Tabs.Screen
-        name="notifications"
-        options={{
-          tabBarIcon: ({ color, size }) => <Ionicons name="heart" size={size} color={color} />,
-        }}
-      />
+     
       <Tabs.Screen
         name="message"
         options={{

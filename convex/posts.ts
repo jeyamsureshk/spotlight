@@ -45,13 +45,25 @@ export const getFeedPosts = query({
   handler: async (ctx) => {
     const currentUser = await getAuthenticatedUser(ctx);
 
-    // get all posts
-    const posts = await ctx.db.query("posts").order("desc").collect();
-    if (posts.length === 0) return [];
+    const follows = await ctx.db
+      .query("follows")
+      .withIndex("by_follower", (q) => q.eq("followerId", currentUser._id))
+      .collect();
 
-    // enhance posts with userdata and interaction status
+    const friendIds = follows
+      .filter((follow) => follow.status === "accepted" || follow.status === undefined)
+      .map((follow) => follow.followingId.toString());
+
+    const userIds = [currentUser._id.toString(), ...new Set(friendIds)];
+
+    const posts = await ctx.db.query("posts").order("desc").collect();
+    const filteredPosts = posts.filter((post) =>
+      userIds.includes(post.userId.toString())
+    );
+    if (filteredPosts.length === 0) return [];
+
     const postsWithInfo = await Promise.all(
-      posts.map(async (post) => {
+      filteredPosts.map(async (post) => {
         const postAuthor = (await ctx.db.get(post.userId))!;
 
         const like = await ctx.db

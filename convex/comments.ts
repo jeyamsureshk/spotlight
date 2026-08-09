@@ -61,3 +61,55 @@ export const getComments = query({
     return commentsWithInfo;
   },
 });
+
+// --- NEW MUTATIONS ADDED BELOW ---
+
+export const editComment = mutation({
+  args: {
+    commentId: v.id("comments"),
+    content: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const currentUser = await getAuthenticatedUser(ctx);
+
+    const comment = await ctx.db.get(args.commentId);
+    if (!comment) throw new ConvexError("Comment not found");
+
+    // Ensure the person editing is the original author
+    if (comment.userId !== currentUser._id) {
+      throw new ConvexError("Unauthorized: You can only edit your own comments");
+    }
+
+    await ctx.db.patch(args.commentId, {
+      content: args.content,
+    });
+  },
+});
+
+export const deleteComment = mutation({
+  args: {
+    commentId: v.id("comments"),
+  },
+  handler: async (ctx, args) => {
+    const currentUser = await getAuthenticatedUser(ctx);
+
+    const comment = await ctx.db.get(args.commentId);
+    if (!comment) throw new ConvexError("Comment not found");
+
+    // Ensure the person deleting is the original author
+    if (comment.userId !== currentUser._id) {
+      throw new ConvexError("Unauthorized: You can only delete your own comments");
+    }
+
+    // Decrement the comment count on the post by 1
+    const post = await ctx.db.get(comment.postId);
+    if (post) {
+      await ctx.db.patch(comment.postId, { 
+        comments: Math.max(0, post.comments - 1) // Ensures it doesn't go below 0
+      });
+    }
+
+    // Delete the comment
+    await ctx.db.delete(args.commentId);
+  },
+});

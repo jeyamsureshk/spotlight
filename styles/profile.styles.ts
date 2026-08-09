@@ -196,6 +196,7 @@ export const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 8,
     marginTop: 16,
+    alignItems: "center",
   },
   messageButton: {
     backgroundColor: COLORS.surface,
@@ -203,6 +204,7 @@ export const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 8,
     marginTop: 12,
+    alignItems: "center",
   },
   messageButtonText: {
     color: COLORS.white,

@@ -11,6 +11,7 @@ import { View, Text, TouchableOpacity } from "react-native";
 import CommentsModal from "./CommentsModal";
 import { formatDistanceToNow } from "date-fns";
 import { useUser } from "@clerk/clerk-expo";
+import Animated, { FadeInDown } from "react-native-reanimated"; 
 
 type PostProps = {
   post: {
@@ -33,8 +34,10 @@ type PostProps = {
 export default function Post({ post }: PostProps) {
   const [isLiked, setIsLiked] = useState(post.isLiked);
   const [isBookmarked, setIsBookmarked] = useState(post.isBookmarked);
-
   const [showComments, setShowComments] = useState(false);
+  
+  // 👇 FIX: Added state to track the original aspect ratio of the image (defaults to 1:1)
+  const [imageAspect, setImageAspect] = useState(1);
 
   const { user } = useUser();
 
@@ -67,7 +70,10 @@ export default function Post({ post }: PostProps) {
   };
 
   return (
-    <View style={styles.post}>
+    <Animated.View 
+      entering={FadeInDown.duration(400).springify()} 
+      style={styles.post}
+    >
       {/* POST HEADER */}
       <View style={styles.postHeader}>
         <Link
@@ -88,7 +94,6 @@ export default function Post({ post }: PostProps) {
           </TouchableOpacity>
         </Link>
 
-        {/* if i'm the owner of the post, show the delete button  */}
         {post.author._id === currentUser?._id ? (
           <TouchableOpacity onPress={handleDelete}>
             <Ionicons name="trash-outline" size={20} color={COLORS.primary} />
@@ -100,13 +105,28 @@ export default function Post({ post }: PostProps) {
         )}
       </View>
 
-      {/* IMAGE */}
+      {/* IMAGE (Original Aspect Ratio Fix) */}
       <Image
         source={post.imageUrl}
-        style={styles.postImage}
+        // 👇 FIX: Overriding fixed height and applying the dynamic original aspect ratio
+        style={[
+          styles.postImage, 
+          { 
+            borderRadius: 16, 
+            overflow: "hidden",
+            height: undefined, 
+            aspectRatio: imageAspect 
+          }
+        ]}
         contentFit="cover"
         transition={200}
         cachePolicy="memory-disk"
+        // 👇 FIX: Detect original dimensions when the image loads
+        onLoad={(e) => {
+          if (e.source.width && e.source.height) {
+            setImageAspect(e.source.width / e.source.height);
+          }
+        }}
       />
 
       {/* POST ACTIONS */}
@@ -116,7 +136,7 @@ export default function Post({ post }: PostProps) {
             <Ionicons
               name={isLiked ? "heart" : "heart-outline"}
               size={24}
-              color={isLiked ? COLORS.primary : COLORS.white}
+              color={isLiked ? COLORS.red : COLORS.white}
             />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => setShowComments(true)}>
@@ -139,8 +159,10 @@ export default function Post({ post }: PostProps) {
         </Text>
         {post.caption && (
           <View style={styles.captionContainer}>
-            <Text style={styles.captionUsername}>{post.author.username}</Text>
-            <Text style={styles.captionText}>{post.caption}</Text>
+            <Text style={styles.captionText}>
+              <Text style={styles.captionUsername}>{post.author.username}</Text>
+              {" "}{post.caption}
+            </Text>
           </View>
         )}
 
@@ -160,6 +182,6 @@ export default function Post({ post }: PostProps) {
         visible={showComments}
         onClose={() => setShowComments(false)}
       />
-    </View>
+    </Animated.View>
   );
 }

@@ -1,0 +1,32 @@
+{
+  "cli": {
+    "version": ">= 21.1.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_CONVEX_URL": "https://watchful-mule-559.convex.cloud",
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_am9pbnQtc3BhcnJvdy01LmNsZXJrLmFjY291bnRzLmRldiQ"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_CONVEX_URL": "https://gregarious-snail-439.convex.cloud",
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_live_Y2xlcmsuc3BvdGxpZ2h0LWFwcC5jb20k"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

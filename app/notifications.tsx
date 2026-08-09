@@ -4,11 +4,19 @@ import { COLORS } from "@/constants/theme";
 import { api } from "@/convex/_generated/api";
 import { styles } from "@/styles/notifications.styles";
 import { Ionicons } from "@expo/vector-icons";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
+import { useEffect } from "react";
 import { FlatList, Text, View } from "react-native";
 
 export default function Notifications() {
   const notifications = useQuery(api.notifications.getNotifications);
+  const markNotificationsRead = useMutation(api.notifications.markNotificationsRead);
+
+  useEffect(() => {
+    if (notifications && notifications.length > 0) {
+      markNotificationsRead();
+    }
+  }, [notifications]);
 
   if (notifications === undefined) return <Loader />;
   if (notifications.length === 0) return <NoNotificationsFound />;

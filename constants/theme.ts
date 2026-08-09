@@ -1,9 +1,10 @@
 export const COLORS = {
-  primary: "#4ADE80",
+  primary: "#2AaEa0",
   secondary: "#2DD4BF",
-  background: "#000000",
-  surface: "#1A1A1A",
+  background: "#fff",
+  surface: "#2AaEa0",
   surfaceLight: "#2A2A2A",
-  white: "#FFFFFF",
+  white: "#000",
+  red:"#f10000",
   grey: "#9CA3AF",
 } as const;

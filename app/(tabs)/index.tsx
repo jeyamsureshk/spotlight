@@ -9,14 +9,16 @@ import { useQuery } from "convex/react";
 import { FlatList, RefreshControl, Text, TouchableOpacity, View } from "react-native";
 import { styles } from "../../styles/feed.styles";
 import { useState } from "react";
+import { router } from "expo-router"; // Added router import
 
 export default function Index() {
   const { signOut } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
 
   const posts = useQuery(api.posts.getFeedPosts);
+  const notificationCount = useQuery(api.notifications.getNewNotificationCount);
 
-  if (posts === undefined) return <Loader />;
+  if (posts === undefined || notificationCount === undefined) return <Loader />;
   if (posts.length === 0) return <NoPostsFound />;
 
   // this does nothing
@@ -31,9 +33,14 @@ export default function Index() {
     <View style={styles.container}>
       {/* HEADER */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>spotlight</Text>
-        <TouchableOpacity onPress={() => signOut()}>
-          <Ionicons name="log-out-outline" size={24} color={COLORS.white} />
+        <Text style={styles.headerTitle}>Spotlight</Text>
+        <TouchableOpacity style={styles.notificationButton} onPress={() => router.push("/notifications")}>
+          <Ionicons name="notifications-outline" size={24} color={COLORS.white} />
+          {notificationCount > 0 && (
+            <View style={styles.notificationBadge}>
+              <Text style={styles.notificationBadgeText}>{notificationCount}</Text>
+            </View>
+          )}
         </TouchableOpacity>
       </View>
 

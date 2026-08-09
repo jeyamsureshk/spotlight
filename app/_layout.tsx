@@ -1,11 +1,11 @@
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import InitialLayout from "@/components/InitialLayout";
 import ClerkAndConvexProvider from "@/providers/ClerkAndConvexProvider";
 import { SplashScreen } from "expo-router";
 import { useFonts } from "expo-font";
 import { useCallback, useEffect } from "react";
 import * as NavigationBar from "expo-navigation-bar";
-import { Platform } from "react-native";
+import { Platform, View } from "react-native"; // 👇 Imported View
 
 import { StatusBar } from "expo-status-bar";
 
@@ -23,7 +23,9 @@ export default function RootLayout() {
   // update the native navigation bar on Android.
   useEffect(() => {
     if (Platform.OS === "android") {
-      NavigationBar.setBackgroundColorAsync("#000000");
+      // 👇 Makes the Android nav bar transparent and draws the app behind it
+      NavigationBar.setPositionAsync("absolute");
+      NavigationBar.setBackgroundColorAsync("transparent");
       NavigationBar.setButtonStyleAsync("light");
     }
   }, []);
@@ -31,11 +33,13 @@ export default function RootLayout() {
   return (
     <ClerkAndConvexProvider>
       <SafeAreaProvider>
-        <SafeAreaView style={{ flex: 1, backgroundColor: "#000" }} onLayout={onLayoutRootView}>
+        {/* 👇 Changed from SafeAreaView to a standard View for edge-to-edge rendering */}
+        <View style={{ flex: 1, backgroundColor: "#000" }} onLayout={onLayoutRootView}>
           <InitialLayout />
-        </SafeAreaView>
+        </View>
       </SafeAreaProvider>
-      <StatusBar style="light" />
+      {/* 👇 Added translucent prop to ensure status bar overlays the app */}
+      <StatusBar style="light" translucent />
     </ClerkAndConvexProvider>
   );
 }

@@ -14,7 +14,7 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderBottomWidth: 1,
+    borderBottomWidth: 0,
     borderBottomColor: COLORS.surface,
   },
   headerTitle: {
@@ -24,7 +24,7 @@ export const styles = StyleSheet.create({
   },
   storiesContainer: {
     paddingVertical: 12,
-    borderBottomWidth: 1,
+    borderBottomWidth: 0,
     borderBottomColor: COLORS.surface,
   },
   storyWrapper: {
@@ -190,10 +190,74 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
+  },
+  searchContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  searchInput: {
+    backgroundColor: COLORS.surface,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    color: COLORS.white,
+    fontSize: 16,
+  },
+  userResultItem: {
+    backgroundColor: COLORS.surface,
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 12,
+  },
+  userResultName: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 4,
+  },
+  userResultSubtext: {
+    color: COLORS.grey,
+    fontSize: 14,
+  },
+  noResultsContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+  },
+  noResultsText: {
+    color: COLORS.white,
+    fontSize: 16,
+  },
+  commentInput: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
     paddingVertical: 12,
     borderTopWidth: 0.5,
     borderTopColor: COLORS.surface,
     backgroundColor: COLORS.background,
+  },
+  notificationButton: {
+    position: "relative",
+    padding: 4,
+  },
+  notificationBadge: {
+    position: "absolute",
+    top: -6,
+    right: -6,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: COLORS.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 4,
+  },
+  notificationBadgeText: {
+    color: COLORS.background,
+    fontSize: 11,
+    fontWeight: "700",
   },
   input: {
     flex: 1,

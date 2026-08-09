@@ -12,12 +12,16 @@ export default defineSchema({
     following: v.number(),
     posts: v.number(),
     clerkId: v.string(),
+    age: v.optional(v.number()),
+    phone: v.optional(v.string()),
+    gender: v.optional(v.string()),
+    dob: v.optional(v.string()),
   }).index("by_clerk_id", ["clerkId"]),
 
   posts: defineTable({
     userId: v.id("users"),
     imageUrl: v.string(),
-    storageId: v.id("_storage"), // will be needed when we want to delete a post
+    storageId: v.id("_storage"),
     caption: v.optional(v.string()),
     likes: v.number(),
     comments: v.number(),
@@ -39,17 +43,33 @@ export default defineSchema({
   follows: defineTable({
     followerId: v.id("users"),
     followingId: v.id("users"),
+    status: v.optional(v.union(v.literal("pending"), v.literal("accepted"))),
   })
     .index("by_follower", ["followerId"])
     .index("by_following", ["followingId"])
-    .index("by_both", ["followerId", "followingId"]),
+    .index("by_both", ["followerId", "followingId"]), // Crucial index for the queries to work
+
+  followRequests: defineTable({
+    requesterId: v.id("users"),
+    receiverId: v.id("users"),
+    createdAt: v.number(),
+  })
+    .index("by_receiver", ["receiverId"])
+    .index("by_requester", ["requesterId"])
+    .index("by_pair", ["requesterId", "receiverId"]),
 
   notifications: defineTable({
     receiverId: v.id("users"),
     senderId: v.id("users"),
-    type: v.union(v.literal("like"), v.literal("comment"), v.literal("follow")),
+    type: v.union(
+      v.literal("like"),
+      v.literal("comment"),
+      v.literal("follow"),
+      v.literal("follow_request")
+    ),
     postId: v.optional(v.id("posts")),
     commentId: v.optional(v.id("comments")),
+    read: v.optional(v.boolean()),
   })
     .index("by_receiver", ["receiverId"])
     .index("by_post", ["postId"]),

@@ -51,6 +51,10 @@ export const updateProfile = mutation({
   args: {
     fullname: v.string(),
     bio: v.optional(v.string()),
+    age: v.optional(v.number()),
+    phone: v.optional(v.string()),
+    gender: v.optional(v.string()),
+    dob: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const currentUser = await getAuthenticatedUser(ctx);
@@ -58,6 +62,10 @@ export const updateProfile = mutation({
     await ctx.db.patch(currentUser._id, {
       fullname: args.fullname,
       bio: args.bio,
+      age: args.age,
+      phone: args.phone,
+      gender: args.gender,
+      dob: args.dob,
     });
   },
 });
@@ -83,6 +91,19 @@ export const getUserProfile = query({
     if (!user) throw new Error("User not found");
 
     return user;
+  },
+});
+
+export const searchUsersByName = query({
+  args: { query: v.string() },
+  handler: async (ctx, args) => {
+    const searchTerm = args.query.trim().toLowerCase();
+    if (!searchTerm) return [];
+
+    const users = await ctx.db.query("users").collect();
+    return users.filter((user) =>
+      user.username.toLowerCase().includes(searchTerm)
+    );
   },
 });
 
@@ -115,16 +136,20 @@ export const toggleFollow = mutation({
       .first();
 
     if (existing) {
-      // unfollow
+      // unfollow or cancel request
       await ctx.db.delete(existing._id);
-      await updateFollowCounts(ctx, currentUser._id, args.followingId, false);
+      
+      // FIX: Only subtract from counts if the follow was actually accepted
+      if (existing.status === "accepted" || existing.status === undefined) {
+        await updateFollowCounts(ctx, currentUser._id, args.followingId, false);
+      }
     } else {
-      // follow
+      // follow request
       await ctx.db.insert("follows", {
         followerId: currentUser._id,
         followingId: args.followingId,
+        status: "pending",
       });
-      await updateFollowCounts(ctx, currentUser._id, args.followingId, true);
 
       // create a notification
       await ctx.db.insert("notifications", {
@@ -135,6 +160,48 @@ export const toggleFollow = mutation({
     }
   },
 });
+
+// --- NEW MUTATIONS: Accept or Reject Follow Requests ---
+
+export const acceptFollow = mutation({
+  args: { followerId: v.id("users") },
+  handler: async (ctx, args) => {
+    const currentUser = await getAuthenticatedUser(ctx);
+    
+    const followRequest = await ctx.db
+      .query("follows")
+      .withIndex("by_both", (q) =>
+        q.eq("followerId", args.followerId).eq("followingId", currentUser._id)
+      )
+      .first();
+
+    if (followRequest && followRequest.status === "pending") {
+      await ctx.db.patch(followRequest._id, { status: "accepted" });
+      // Increment counts only when accepted
+      await updateFollowCounts(ctx, args.followerId, currentUser._id, true);
+    }
+  }
+});
+
+export const rejectFollow = mutation({
+  args: { followerId: v.id("users") },
+  handler: async (ctx, args) => {
+    const currentUser = await getAuthenticatedUser(ctx);
+    
+    const followRequest = await ctx.db
+      .query("follows")
+      .withIndex("by_both", (q) =>
+        q.eq("followerId", args.followerId).eq("followingId", currentUser._id)
+      )
+      .first();
+
+    if (followRequest && followRequest.status === "pending") {
+      await ctx.db.delete(followRequest._id);
+    }
+  }
+});
+
+// --------------------------------------------------------
 
 async function updateFollowCounts(
   ctx: MutationCtx,
@@ -147,10 +214,10 @@ async function updateFollowCounts(
 
   if (follower && following) {
     await ctx.db.patch(followerId, {
-      following: follower.following + (isFollow ? 1 : -1),
+      following: Math.max(0, follower.following + (isFollow ? 1 : -1)),
     });
     await ctx.db.patch(followingId, {
-      followers: following.followers + (isFollow ? 1 : -1),
+      followers: Math.max(0, following.followers + (isFollow ? 1 : -1)),
     });
   }
 }
